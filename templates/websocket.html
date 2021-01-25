@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+	<script type="text/javascript">
+		message_polling = setInterval(function(){
+			ws.send("Hello from client")
+		})
+
+		var path = new String(window.location.href);
+		var qmark_pos = path.indexOf('?');
+		console.log(qmark_pos);
+		console.log(path.length);
+		var client_id = path.slice(qmark_pos + 1, path.length); 
+		var h1 = document.createElement("h1");
+		var text = document.createTextNode("Welcome, " + client_id);
+		h1.appendChild(text);
+
+		document.body.appendChild(h1);
+		let host = "ws://threadedstream:1234@127.0.0.1:4560";
+
+		var ws = new WebSocket(host);
+		ws.onerror = function(event){
+			console.log(event.data);
+		}
+
+		ws.onmessage = function(event){
+			console.log(event.data);
+		}
+				
+		ws.onopen = function(event){
+			ws.send("Hello, Server");
+		}
+
+		ws.onclose = function(event){
+			console.log("Connection terminated");
+			clearInterval(message_polling);
+		}	
+	</script>
+</body>
+</html>

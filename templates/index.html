@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	<h1>Authorization page</h1>
+	<form id="client-form">
+		<input id="client-id" type="text">
+		<button id="send-id-btn" type="button">Send id</button>
+	</form>
+	<script type="text/javascript">
+		const user_id = document.getElementById('client-id');
+		const btn = document.getElementById('send-id-btn');
+
+		btn.onclick = function(event){
+			window.location.href = "file:///home/glasser/PycharmProjects/wss/templates/websocket.html?" + user_id.value; 
+		};
+		
+	</script>
+</body>
+</html>
