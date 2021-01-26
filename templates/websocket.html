@@ -4,11 +4,12 @@
     <title></title>
 </head>
 <body>
-	<script type="text/javascript">
-		message_polling = setInterval(function(){
-			ws.send("Hello from client")
-		})
+	<form>
+		<input type="text" id="text-area">
+		<button type="button">Send message</button>
+	</form>
 
+	<script type="text/javascript">
 		var path = new String(window.location.href);
 		var qmark_pos = path.indexOf('?');
 		console.log(qmark_pos);
@@ -19,7 +20,7 @@
 		h1.appendChild(text);
 
 		document.body.appendChild(h1);
-		let host = "ws://threadedstream:1234@127.0.0.1:4560";
+		let host = "ws://127.0.0.1:4560/?username="+client_id;
 
 		var ws = new WebSocket(host);
 		ws.onerror = function(event){
@@ -36,8 +37,8 @@
 
 		ws.onclose = function(event){
 			console.log("Connection terminated");
-			clearInterval(message_polling);
 		}	
+		
 	</script>
 </body>
 </html>
