@@ -5,6 +5,7 @@ from typing import (
     Callable, Any,
     Coroutine)
 import struct
+from utils import octet_at, decipher_message
 
 
 class Opcodes(IntEnum):
@@ -46,7 +47,7 @@ async def decode_frame(read_frame_up_to: Callable[[int], Coroutine[Any, Any, byt
         Last four bits signify opcode. In our case, the text opcode was meant.
     """
     frame = Frame()
-    frame1, frame2, frame3 = struct.unpack("!BBI", frame_piece)
+    frame1, frame2, mask = struct.unpack("!BBI", frame_piece)
     # Parsing first 8 bits
     fin = True if frame1 & 0x80 else False
     rsv1 = True if frame1 & 0x40 else False
@@ -61,9 +62,33 @@ async def decode_frame(read_frame_up_to: Callable[[int], Coroutine[Any, Any, byt
                   'OPCODE': bin(opcode),
                   'HAS_MASK': has_mask,
                   'PAYLOAD_LEN': payload_len})
-
     if has_mask:
         # Parse mask
-        frame.update({'MASK': frame3})
+        frame.update({'MASK': mask})
+
+    deciphered = decipher_message(mask,)
 
     logging.debug(frame)
+
+
+"""
+    Here is an example of decoding the masked message put within a frame
+"""
+
+
+def decode_sample_frame():
+    frame = b"\x81\x85\x37\xfa\x21\x3d\x7f\x9f\x4d\x51\x58"
+    frame1, mask, frame3, frame4 = struct.unpack("!HIIB", frame)
+    """
+        struct unpack does not support unpacking of non-powers of two.
+        Here is a small walk-around to make 5 byte integer.
+        frame3 = 0x7f9f4d51
+        frame4 = 0x58
+        We need to pad frame3 with two zeros at the end, so that it has the following form:
+        0x7f9f4d5100. This operation is equivalent to shifting frame3 to the left by factor of 8 bits.
+        The only operation left is applying bitwise OR to concatenate transformed frame3 with frame4.
+    """
+    frame3 = (frame3 << 8) | frame4
+    octets = 5
+    transformed = decipher_message(frame3, mask, 5)
+    print(transformed)
