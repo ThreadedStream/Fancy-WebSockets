@@ -1,21 +1,20 @@
 import socket
 import asyncio
+import threading
 from typing import Dict, Set
 from utils import *
 from frame import *
-
-logging.getLogger().setLevel(logging.DEBUG)
+import logging
 
 HOST = "127.0.0.1"
 PORT = 4560
+
+logging.getLogger().setLevel(logging.DEBUG)
 
 RESPONSE = 'HTTP/1.1 101 Switching Protocols\r\n' \
            'Upgrade: websocket\r\n' \
            'Connection: Upgrade\r\n' \
            'Sec-WebSocket-Accept: %s\r\n\r\n'
-
-PING = 0x81
-LEN = 0x05
 MSG = "Hello".encode()
 users = Dict[str, Set]
 
@@ -44,19 +43,23 @@ class Headers(object):
 
 async def ping(writer: asyncio.StreamWriter):
     logging.debug('In ping...')
-    data = b'\x81\x05'
+    data = b'\x8a\x05'
     data += MSG
     writer.write(data)
 
 
 async def pong(reader: asyncio.StreamReader):
     logging.debug('In pong...')
-    await decode_frame(reader.readexactly)
+    await decode_frame(reader.readexactly, reader)
 
 
 async def pingponging(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     await ping(writer)
     await pong(reader)
+    await asyncio.sleep(5)
+    await pingponging(reader, writer)
+
+    asyncio.get_event_loop().call_later(10, pong, (writer,))
 
 
 async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:

@@ -79,7 +79,7 @@ def parse(data: bytes) -> dict:
     Let's take a number 0x7f9f4d5158 denoting masked message. 
     Say, i want to pull out zeroth octet of that particular number.
     First, i need to initialize a mask, which happens to be 0xFF.
-    Once mask is initialized, it is required to apply shift operation by factor of (len - index - 1) * 8.
+    Once mask is initialized, it is required to apply left shift operation by factor of (len - index - 1) * 8.
     Substituting for len and index yields: (5 - 0 - 1) = 4.
     Here is a visual representation of result after applied operation:
 
@@ -92,7 +92,7 @@ def parse(data: bytes) -> dict:
     ------------
     0x7f00000000
 
-    For finishing things up, we need to shift this by factor of (len - index - 1) * 8, i.e by 32
+    For finishing things up, we need to shift this to the right by factor of (len - index - 1) * 8, i.e by 32
 """
 
 
@@ -100,9 +100,18 @@ def octet_at(number: int, index: int, len: int) -> int:
     return (number & (0xFF << ((len - index - 1) * 8))) >> ((len - index - 1) * 8)
 
 
-def decipher_message(masked_message: int, mask: int, payload_len: int) -> list:
+def decipher_message(masked_message: tuple, mask: int, payload_len: int) -> list:
     MOD = 4
     MASK_LEN = 4
     for i in range(payload_len):
         j = i % MOD
-        yield octet_at(masked_message, i, payload_len) ^ octet_at(mask, j, MASK_LEN)
+        yield masked_message[i] ^ octet_at(mask, j, MASK_LEN)
+
+
+def ascii_to_str(ascii_list: list) -> str:
+    word = ''
+    for i in range(len(ascii_list)):
+        word += chr(ascii_list[i])
+
+    return word
+

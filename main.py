@@ -17,4 +17,4 @@ def print_current_time():
 
 
 if __name__ == '__main__':
-    frame.decode_sample_frame()
+    server.start()
