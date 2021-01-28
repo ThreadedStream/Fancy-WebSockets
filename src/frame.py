@@ -1,50 +1,11 @@
 import logging
-from enum import IntEnum
 from typing import (
-    TypedDict, Optional,
     Callable, Any,
     Coroutine)
+from structs import *
 import struct
 import asyncio
 from utils import (decipher_message, ascii_to_str)
-
-
-# For more details, see https://tools.ietf.org/html/rfc6455#page-45
-class StatusCodes(IntEnum):
-    OK = 1000
-    GOING_AWAY = 1001
-    PROTOCOL_ERR = 1002
-    INVALID_DATA = 1003
-    RESERVED_0 = 1004
-    RESERVED_1 = 1005
-    RESERVED_2 = 1006
-    TYPE_INCONSISTENCY = 1007
-    POLICY_VIOLATION = 1008
-    MSG_TOO_BIG = 1009
-    NEGOTIATION_ERR = 1010
-    UNEXPECTED_COND = 1011
-    RESERVED_3 = 1015
-
-
-class Opcodes(IntEnum):
-    CONT = 0x0
-    TEXT = 0x1
-    BINARY = 0x2
-    CONN_CLOSE = 0x8
-    PING = 0x9
-    PONG = 0xA
-
-
-class Frame(TypedDict):
-    FIN: bool
-    RSV1: int
-    RSV2: int
-    RSV3: int
-    OPCODE: Opcodes
-    HAS_MASK: bool
-    PAYLOAD_LEN: int
-    MASK: Optional[int]
-    PAYLOAD_DATA: str
 
 
 def match_opcode(opcode_num: int) -> Opcodes:
@@ -55,7 +16,18 @@ def match_opcode(opcode_num: int) -> Opcodes:
     return num_to_opcode[opcode_num]
 
 
-async def decode_frame(read_frame_up_to: Callable[[int], Coroutine[Any, Any, bytes]], reader: asyncio.StreamReader):
+def build_frame(fin: bool, opcode: int, payload_len, payload_data) -> bytes:
+    payload_data_fmt = "B" * payload_len
+    nibble_0 = (int(fin) << 3)
+    nibble_1 = opcode
+    byte_0 = (nibble_0 << 4) | nibble_1
+    byte_1 = payload_len
+    rest = payload_data
+    raw_data = struct.pack(f"!BB{payload_data_fmt}", byte_0, byte_1, rest)
+    return raw_data
+
+
+async def decode_frame(read_frame_up_to: Callable[[int], Coroutine[Any, Any, bytes]]):
     """
         Say, server has received frame of such form:
         \x81\x8d\
@@ -71,7 +43,7 @@ async def decode_frame(read_frame_up_to: Callable[[int], Coroutine[Any, Any, byt
         Subsequent 3 bits signify rsv bits. In majority of cases, these bits should be equal zero.
         Last four bits signify opcode. In our case, the text opcode was meant.
     """
-    frame = Frame()
+    frame = FrameOpts()
     frame1, frame2, mask = struct.unpack("!BBI", await read_frame_up_to(6))
     # Parsing first 8 bits
     fin = True if frame1 & 0x80 else False

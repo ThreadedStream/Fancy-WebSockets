@@ -35,45 +35,6 @@ def accept_key(key: str) -> str:
     return base64.b64encode(sha1).decode()
 
 
-def parse_method_and_protocol(header_str: str) -> tuple:
-    has_query_params = False
-    tokens = header_str.split(' ')
-    if len(tokens) > 2:
-        has_query_params = True
-        method = tokens[0].strip()
-        params = tokens[1].strip()
-        protocol = tokens[2].strip()
-    elif len(tokens) == 2:
-        method = tokens[0].strip()
-        params = None
-        protocol = tokens[1].strip()
-    else:
-        raise Exception("Header string is empty")
-
-    return has_query_params, method, params, protocol
-
-
-def parse(data: bytes) -> dict:
-    dt = data.decode('utf-8')
-    parsed = dict()
-    try:
-        dt = removesuffix(dt, '\r\n\r\n')
-        keys = dt.split('\r\n')
-        has_query_params, method, params, protocol = parse_method_and_protocol(keys[0])
-        parsed['Has-Query-Params'] = has_query_params
-        parsed['Method'] = method
-        parsed['Params'] = params
-        parsed['Protocol'] = protocol
-        del keys[0]
-        for key in keys:
-            k = key.split(':')[0]
-            v = key.split(':')[1].strip()
-            parsed[k] = v
-        return parsed
-    except Exception as ex:
-        logging.error(ex)
-
-
 """
     Function octet_at returns octet of len-bytes number at a specific index.
     Let's take a number 0x7f9f4d5158 denoting masked message. 
@@ -114,4 +75,3 @@ def ascii_to_str(ascii_list: list) -> str:
         word += chr(ascii_list[i])
 
     return word
-

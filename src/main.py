@@ -1,8 +1,7 @@
 import server
 from utils import removesuffix
 import time
-import frame
-import threading
+from consts import *
 
 
 def removesuffix_test():
@@ -17,4 +16,5 @@ def print_current_time():
 
 
 if __name__ == '__main__':
-    server.start()
+    chat_server = server.ChatServer(HOST, PORT)
+
