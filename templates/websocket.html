@@ -4,23 +4,25 @@
     <title></title>
 </head>
 <body>
+	<h1 id="welcome-msg"></h1>
 	<form>
 		<input type="text" id="text-area">
-		<button type="button">Send message</button>
+		<button type="button" onclick="sendMsg()">Send message</button>
+		<p>To:</p>
+		<input type="text" id="to">
 	</form>
 
 	<script type="text/javascript">
+		var text_area = document.getElementById('text-area'); 
+		var to = document.getElementById('to');
 		var path = new String(window.location.href);
 		var qmark_pos = path.indexOf('?');
 		console.log(qmark_pos);
 		console.log(path.length);
 		var client_id = path.slice(qmark_pos + 1, path.length); 
-		var h1 = document.createElement("h1");
-		var text = document.createTextNode("Welcome, " + client_id);
-		h1.appendChild(text);
+		document.getElementById('welcome-msg').innerHTML = 'Welcome, ' + client_id;		
 
-		document.body.appendChild(h1);
-		let host = "ws://127.0.0.1:4560/?username="+client_id;
+		let host = "ws://127.0.0.1:4560/?username="+client_id + "&to="+to.value;
 
 		var ws = new WebSocket(host);
 		ws.onerror = function(event){
@@ -32,13 +34,21 @@
 		}
 				
 		ws.onopen = function(event){
-			ws.send("Hello, Server");
+			ws.send("Do not worry 'bout a thing");
 		}
 
 		ws.onclose = function(event){
 			console.log("Connection terminated");
 		}	
 		
+		sendMsg = function(){
+			message = text_area.value;
+			ws.send(message);
+			console.log("Message was successfully delivered");
+
+
+		}
+
 	</script>
 </body>
 </html>
